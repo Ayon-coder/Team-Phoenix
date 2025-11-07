@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, User } from "lucide-react";
+import { Calendar, User, Star, MessageCircle } from "lucide-react";
+import { getAverageRating } from "@/lib/storage";
 
 export interface Product {
   id: string;
@@ -20,6 +22,13 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const [rating, setRating] = useState({ average: 0, count: 0 });
+  const sellerId = `seller_${product.seller.replace(/\s/g, "_")}`;
+
+  useEffect(() => {
+    setRating(getAverageRating(sellerId));
+  }, [sellerId]);
+
   return (
     <Card className="overflow-hidden hover:shadow-soft transition-all duration-300 group">
       <div className="aspect-square overflow-hidden bg-muted">
@@ -41,25 +50,36 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <p className="text-sm text-muted-foreground line-clamp-2">
           {product.description}
         </p>
-        <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
           <div className="flex items-center gap-1">
             <User className="h-3 w-3" />
             <span>{product.seller}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>{product.datePosted}</span>
-          </div>
+          {rating.count > 0 && (
+            <div className="flex items-center gap-1 text-accent">
+              <Star className="h-3 w-3 fill-accent" />
+              <span className="font-medium">{rating.average.toFixed(1)}</span>
+              <span className="text-muted-foreground">({rating.count})</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+          <Calendar className="h-3 w-3" />
+          <span>{product.datePosted}</span>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Price</p>
-          <p className="text-2xl font-bold text-primary">${product.price}</p>
+      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
+        <span className="text-2xl font-bold text-primary">${product.price}</span>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/chat/${product.id}`}>
+              <MessageCircle className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link to={`/product/${product.id}`}>View</Link>
+          </Button>
         </div>
-        <Button variant="default" asChild>
-          <Link to={`/product/${product.id}`}>View Details</Link>
-        </Button>
       </CardFooter>
     </Card>
   );

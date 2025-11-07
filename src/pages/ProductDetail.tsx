@@ -1,16 +1,27 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, MessageCircle, Calendar, User, Shield } from "lucide-react";
+import { ArrowLeft, MessageCircle, Calendar, User, Shield, Star } from "lucide-react";
 import { products } from "@/data/products";
+import ReviewSection from "@/components/ReviewSection";
+import { getAverageRating } from "@/lib/storage";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const product = products.find((p) => p.id === id);
+  const [rating, setRating] = useState({ average: 0, count: 0 });
+
+  useEffect(() => {
+    if (product) {
+      const sellerId = `seller_${product.seller.replace(/\s/g, "_")}`;
+      setRating(getAverageRating(sellerId));
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -82,9 +93,18 @@ const ProductDetail = () => {
                   </Avatar>
                   <div>
                     <p className="font-semibold text-foreground">{product.seller}</p>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Shield className="h-3 w-3 text-accent" />
-                      <span>Verified Student</span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Shield className="h-3 w-3 text-accent" />
+                        <span>Verified Student</span>
+                      </div>
+                      {rating.count > 0 && (
+                        <div className="flex items-center gap-1 text-accent">
+                          <Star className="h-3 w-3 fill-accent" />
+                          <span className="font-medium">{rating.average.toFixed(1)}</span>
+                          <span className="text-muted-foreground">({rating.count})</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -107,9 +127,11 @@ const ProductDetail = () => {
 
             {/* Actions */}
             <div className="space-y-3">
-              <Button variant="hero" size="lg" className="w-full text-base">
-                <MessageCircle className="h-5 w-5" />
-                Contact Seller
+              <Button asChild variant="hero" size="lg" className="w-full text-base">
+                <Link to={`/chat/${product.id}`}>
+                  <MessageCircle className="h-5 w-5" />
+                  Message Seller
+                </Link>
               </Button>
               <Button variant="outline" size="lg" className="w-full text-base">
                 Save for Later
@@ -128,6 +150,14 @@ const ProductDetail = () => {
               </p>
             </Card>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-12 max-w-4xl mx-auto">
+          <ReviewSection 
+            productId={product.id} 
+            sellerId={`seller_${product.seller.replace(/\s/g, "_")}`}
+          />
         </div>
       </main>
     </div>
